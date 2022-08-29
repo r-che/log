@@ -22,6 +22,8 @@ type logMsg struct {
 var msgCh chan *logMsg
 var stpStrCh chan interface{}
 
+// TODO Add NoTs function
+
 func Open(file, prefix string, flags int) error {
 	logName = file
 	logPrefix = prefix
@@ -87,6 +89,11 @@ func Fatal(format string, v ...any) {
 }
 
 func Close() error {
+	// Stop receiving messages
+	stpStrCh<-nil
+	// Wait acknowledge message from writer-goroutine
+	<-stpStrCh
+
 	if logName == "" {
 		// Standard logger was used, nothing to close
 		return nil
@@ -97,11 +104,6 @@ func Close() error {
 }
 
 func Reopen() error {
-	// Stop receiving messages
-	stpStrCh<-nil
-	// Wait acknowledge message from writer-goroutine
-	<-stpStrCh
-
 	// Close opened log file
 	Close()
 
