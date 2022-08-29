@@ -1,0 +1,7 @@
+*.swp
+*.swo
+vimsess
+test
+Makefile
+run.sh
+.lvimrc
