@@ -98,7 +98,7 @@ func Fatal(format string, v ...any) {
 	msgCh <-&logMsg{format: "FATAL: " + format, args: v, fatal: true}
 }
 func F(format string, v ...any) {
-	F(format, v...)
+	Fatal(format, v...)
 }
 
 func Close() error {
