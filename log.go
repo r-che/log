@@ -69,21 +69,36 @@ func Debug(format string, v ...any) {
 	}
 	msgCh <-&logMsg{format: "DEBUG: " + format, args: v}
 }
+func D(format string, v ...any) {
+	Debug(format, v...)
+}
 
 func Info(format string, v ...any) {
 	msgCh <-&logMsg{format: format, args: v}
+}
+func I(format string, v ...any) {
+	Info(format, v...)
 }
 
 func Warn(format string, v ...any) {
 	msgCh <-&logMsg{format: "WARN: " + format, args: v}
 }
+func W(format string, v ...any) {
+	Warn(format, v...)
+}
 
 func Err(format string, v ...any) {
 	msgCh <-&logMsg{format: "ERROR: " + format, args: v}
 }
+func E(format string, v ...any) {
+	Err(format, v...)
+}
 
 func Fatal(format string, v ...any) {
 	msgCh <-&logMsg{format: "FATAL: " + format, args: v, fatal: true}
+}
+func F(format string, v ...any) {
+	F(format, v...)
 }
 
 func Close() error {
