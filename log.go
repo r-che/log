@@ -22,8 +22,6 @@ type logMsg struct {
 var msgCh chan *logMsg
 var stpStrCh chan interface{}
 
-// TODO Add NoTs function
-
 func Open(file, prefix string, flags int) error {
 	logName = file
 	logPrefix = prefix
@@ -131,7 +129,7 @@ func openLog() error {
 		logger = log.New(logFd, "", log.LstdFlags)
 	}
 
-	logger.SetFlags(logger.Flags() | log.Lmsgprefix | logFlags)
+	logger.SetFlags(log.Lmsgprefix | logFlags)
 	logger.SetPrefix(fmt.Sprintf("%s[%d]: ", logPrefix, os.Getpid()))
 
 	return nil
