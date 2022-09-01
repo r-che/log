@@ -67,7 +67,7 @@ func Debug(format string, v ...any) {
 	if !debug {
 		return
 	}
-	msgCh <-&logMsg{format: "DEBUG: " + format, args: v}
+	msgCh <-&logMsg{format: "<D> " + format, args: v}
 }
 func D(format string, v ...any) {
 	Debug(format, v...)
@@ -81,21 +81,21 @@ func I(format string, v ...any) {
 }
 
 func Warn(format string, v ...any) {
-	msgCh <-&logMsg{format: "WARN: " + format, args: v}
+	msgCh <-&logMsg{format: "<W> " + format, args: v}
 }
 func W(format string, v ...any) {
 	Warn(format, v...)
 }
 
 func Err(format string, v ...any) {
-	msgCh <-&logMsg{format: "ERROR: " + format, args: v}
+	msgCh <-&logMsg{format: "<E> " + format, args: v}
 }
 func E(format string, v ...any) {
 	Err(format, v...)
 }
 
 func Fatal(format string, v ...any) {
-	msgCh <-&logMsg{format: "FATAL: " + format, args: v, fatal: true}
+	msgCh <-&logMsg{format: "<FATAL> " + format, args: v, fatal: true}
 }
 func F(format string, v ...any) {
 	Fatal(format, v...)
