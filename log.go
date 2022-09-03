@@ -81,14 +81,14 @@ func I(format string, v ...any) {
 }
 
 func Warn(format string, v ...any) {
-	msgCh <-&logMsg{format: "<W> " + format, args: v}
+	msgCh <-&logMsg{format: "<WRN> " + format, args: v}
 }
 func W(format string, v ...any) {
 	Warn(format, v...)
 }
 
 func Err(format string, v ...any) {
-	msgCh <-&logMsg{format: "<E> " + format, args: v}
+	msgCh <-&logMsg{format: "<ERR> " + format, args: v}
 }
 func E(format string, v ...any) {
 	Err(format, v...)
