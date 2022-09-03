@@ -63,42 +63,42 @@ func SetDebug(v bool) {
 	debug = v
 }
 
-func Debug(format string, v ...any) {
+func D(format string, v ...any) {
 	if !debug {
 		return
 	}
 	msgCh <-&logMsg{format: "<D> " + format, args: v}
 }
-func D(format string, v ...any) {
-	Debug(format, v...)
+func Debug(format string, v ...any) {
+	D(format, v...)
 }
 
-func Info(format string, v ...any) {
+func I(format string, v ...any) {
 	msgCh <-&logMsg{format: format, args: v}
 }
-func I(format string, v ...any) {
-	Info(format, v...)
+func Info(format string, v ...any) {
+	I(format, v...)
 }
 
-func Warn(format string, v ...any) {
+func W(format string, v ...any) {
 	msgCh <-&logMsg{format: "<WRN> " + format, args: v}
 }
-func W(format string, v ...any) {
-	Warn(format, v...)
+func Warn(format string, v ...any) {
+	W(format, v...)
 }
 
-func Err(format string, v ...any) {
+func E(format string, v ...any) {
 	msgCh <-&logMsg{format: "<ERR> " + format, args: v}
 }
-func E(format string, v ...any) {
-	Err(format, v...)
+func Err(format string, v ...any) {
+	E(format, v...)
 }
 
-func Fatal(format string, v ...any) {
+func F(format string, v ...any) {
 	msgCh <-&logMsg{format: "<FATAL> " + format, args: v, fatal: true}
 }
-func F(format string, v ...any) {
-	Fatal(format, v...)
+func Fatal(format string, v ...any) {
+	F(format, v...)
 }
 
 func Close() error {
