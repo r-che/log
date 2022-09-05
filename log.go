@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+const logFlagsAlways = log.Lmsgprefix
+
 var logger *log.Logger
 
 var logName string
@@ -24,8 +26,8 @@ var stpStrCh chan interface{}
 
 func Open(file, prefix string, flags int) error {
 	logName = file
-	logPrefix = prefix
-	logFlags = flags
+	logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
+	logFlags = flags | logFlagsAlways
 
 	if err := openLog(); err != nil {
 		return err
@@ -88,6 +90,12 @@ func Warn(format string, v ...any) {
 }
 
 func E(format string, v ...any) {
+	// If logger output is not stderr
+	if logger.Writer() != os.Stderr {
+		// Using default logger to print message to stderr
+		log.Printf("<ERR> " + format, v...)
+	}
+
 	msgCh <-&logMsg{format: "<ERR> " + format, args: v}
 }
 func Err(format string, v ...any) {
@@ -95,6 +103,12 @@ func Err(format string, v ...any) {
 }
 
 func F(format string, v ...any) {
+	// If logger output is not stderr
+	if logger.Writer() != os.Stderr {
+		// Using default logger to print message to stderr
+		log.Printf("<FATAL> " + format, v...)
+	}
+
 	msgCh <-&logMsg{format: "<FATAL> " + format, args: v, fatal: true}
 }
 func Fatal(format string, v ...any) {
@@ -144,8 +158,12 @@ func openLog() error {
 		logger = log.New(logFd, "", log.LstdFlags)
 	}
 
-	logger.SetFlags(log.Lmsgprefix | logFlags)
-	logger.SetPrefix(fmt.Sprintf("%s[%d]: ", logPrefix, os.Getpid()))
+	logger.SetFlags(logFlags)
+	logger.SetPrefix(logPrefix)
+
+	// Configure default logger to print error/fatal messages to stderr
+	log.SetPrefix(logPrefix)
+	log.SetFlags(logFlags)
 
 	return nil
 }
