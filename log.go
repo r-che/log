@@ -6,6 +6,13 @@ import (
 	"fmt"
 )
 
+// Public constants
+const (
+	// Create flags constants from left part of 32-bit number
+	// to avoid collision with flags from standard log package
+	NoPID	= (1 << 31) >> iota
+)
+
 // Public types
 type statFunc func(string, ...any)
 type StatFuncs struct {
@@ -40,7 +47,17 @@ var stpStrCh chan interface{}
 
 func Open(file, prefix string, flags int) error {
 	logName = file
-	logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
+	if flags & NoPID == 0 {
+		// Print PID in each log line
+		logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
+	} else {
+		// PID should not be printed
+		if prefix != "" {
+			logPrefix = fmt.Sprintf("%s: ", prefix)
+		} // else - do not print any prefix
+	}
+
+	// Apply mandatory flags
 	logFlags = flags | logFlagsAlways
 
 	if err := openLog(); err != nil {
