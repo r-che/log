@@ -6,20 +6,34 @@ import (
 	"fmt"
 )
 
-const logFlagsAlways = log.Lmsgprefix
+// Public types
+type statFunc func(string, ...any)
+type StatFuncs struct {
+	Error	statFunc
+	Warning	statFunc
+}
 
-var logger *log.Logger
+// Private constants
+const (
+	logFlagsAlways = log.Lmsgprefix
+)
 
-var logName string
-var logPrefix string
-var logFlags int
-var debug = false
-
+// Private types
 type logMsg struct {
 	format string
 	args []any
 	fatal bool
 }
+
+// Private global variables
+var logger *log.Logger
+var logName string
+var logPrefix string
+var logFlags int
+var debug = false
+// Statistic functions
+var errEventStat statFunc
+var wrnEventStat statFunc
 
 var msgCh chan *logMsg
 var stpStrCh chan interface{}
@@ -43,9 +57,8 @@ func Open(file, prefix string, flags int) error {
 				case msg := <-msgCh:
 					if msg.fatal {
 						logger.Fatalf(msg.format, msg.args...)
-					} else {
-						logger.Printf(msg.format, msg.args...)
 					}
+					logger.Printf(msg.format, msg.args...)
 
 				case <-stpStrCh:
 					// Send signal that stop message was received
@@ -63,6 +76,11 @@ func Open(file, prefix string, flags int) error {
 
 func SetDebug(v bool) {
 	debug = v
+}
+
+func SetStatFuncs(sf *StatFuncs) {
+	errEventStat = sf.Error
+	wrnEventStat = sf.Warning
 }
 
 func D(format string, v ...any) {
@@ -84,6 +102,11 @@ func Info(format string, v ...any) {
 
 func W(format string, v ...any) {
 	msgCh <-&logMsg{format: "<WRN> " + format, args: v}
+
+	// Call statistic function if was set
+	if wrnEventStat != nil {
+		wrnEventStat(format, v...)
+	}
 }
 func Warn(format string, v ...any) {
 	W(format, v...)
@@ -97,6 +120,11 @@ func E(format string, v ...any) {
 	}
 
 	msgCh <-&logMsg{format: "<ERR> " + format, args: v}
+
+	// Call statistic function if was set
+	if errEventStat != nil {
+		errEventStat(format, v...)
+	}
 }
 func Err(format string, v ...any) {
 	E(format, v...)
