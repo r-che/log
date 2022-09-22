@@ -8,6 +8,7 @@ import (
 
 // Public constants
 const (
+	NoFlags = 0
 	// Create flags constants from left part of 32-bit number
 	// to avoid collision with flags from standard log package
 	NoPID	= (1 << 31) >> iota
@@ -35,9 +36,11 @@ type logMsg struct {
 // Private global variables
 var logger *log.Logger
 var logName string
+var origPrefix string
 var logPrefix string
 var logFlags int
 var debug = false
+
 // Statistic functions
 var errEventStat statFunc
 var wrnEventStat statFunc
@@ -47,18 +50,8 @@ var stpStrCh chan interface{}
 
 func Open(file, prefix string, flags int) error {
 	logName = file
-	if flags & NoPID == 0 {
-		// Print PID in each log line
-		logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
-	} else {
-		// PID should not be printed
-		if prefix != "" {
-			logPrefix = fmt.Sprintf("%s: ", prefix)
-		} // else - do not print any prefix
-	}
 
-	// Apply mandatory flags
-	logFlags = flags | logFlagsAlways
+	setFlags(prefix, flags)
 
 	if err := openLog(); err != nil {
 		return err
@@ -89,6 +82,15 @@ func Open(file, prefix string, flags int) error {
 
 	// No errors
 	return nil
+}
+
+func Flags() int {
+	return logFlags
+}
+
+func SetFlags(flags int) {
+	setFlags(origPrefix, flags)
+	Reopen()
 }
 
 func SetDebug(v bool) {
@@ -211,4 +213,22 @@ func openLog() error {
 	log.SetFlags(logFlags)
 
 	return nil
+}
+
+func setFlags(prefix string, flags int) {
+	// Keep an original prefix value
+	origPrefix = prefix
+
+	if flags & NoPID == 0 {
+		// Print PID in each log line
+		logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
+	} else {
+		// PID should not be printed
+		if prefix != "" {
+			logPrefix = fmt.Sprintf("%s: ", prefix)
+		} // else - do not print any prefix
+	}
+
+	// Apply mandatory flags
+	logFlags = flags | logFlagsAlways
 }
