@@ -3,6 +3,8 @@ package log
 import (
 	"fmt"
 	"testing"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -330,6 +332,39 @@ func TestFatal(t *testing.T) {
 	defer Close()
 
 	Fatal("Test fatal error %s", errIsOk)
+}
+
+func TestFailOpen(t *testing.T) {
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", `go-test-rche-log.*`)
+	if err != nil {
+		t.Errorf("cannot create temporary directory: %v", err)
+		t.FailNow()
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create filename includes non-existing directory
+	logFile := filepath.Join(tempDir, "this-dir-does-not-exist", "fail-open.log")
+
+	// Try to open log on this file
+	if err = Open(logFile, stubApp, NoFlags); err == nil {
+		// This should not happen, register abnormal behavior
+		t.Errorf("anormal situation - log opened on non-existing path %q", logFile)
+
+		// So, close log
+		if err = Close(); err != nil {
+			panic("Cannot close log opened on non-existing path: " + err.Error())
+		}
+
+		return
+	}
+
+	// Need to check error type
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("unexpected error returned opening log on non-existing path %q: %v", logFile, err)
+	}
+
+	// Ok, test passed
 }
 
 //
