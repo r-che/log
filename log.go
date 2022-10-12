@@ -53,35 +53,35 @@ func D(format string, v ...any) {
 	logger.D(format, v...)
 }
 func Debug(format string, v ...any) {
-	logger.D(format, v...)
+	logger.Debug(format, v...)
 }
 
 func I(format string, v ...any) {
 	logger.I(format, v...)
 }
 func Info(format string, v ...any) {
-	logger.I(format, v...)
+	logger.Info(format, v...)
 }
 
 func W(format string, v ...any) {
 	logger.W(format, v...)
 }
 func Warn(format string, v ...any) {
-	logger.W(format, v...)
+	logger.Warn(format, v...)
 }
 
 func E(format string, v ...any) {
 	logger.E(format, v...)
 }
 func Err(format string, v ...any) {
-	logger.E(format, v...)
+	logger.Err(format, v...)
 }
 
 func F(format string, v ...any) {
 	logger.F(format, v...)
 }
 func Fatal(format string, v ...any) {
-	logger.F(format, v...)
+	logger.Fatal(format, v...)
 }
 
 func Close() error {
