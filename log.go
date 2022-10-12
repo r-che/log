@@ -21,9 +21,10 @@ type StatFuncs struct {
 
 // Default logger
 
-var logger = NewLogger()
+var logger *Logger
 
 func Open(file, prefix string, flags int) error {
+	logger = NewLogger()
 	return logger.Open(file, prefix, flags)
 }
 
