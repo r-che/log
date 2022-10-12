@@ -385,6 +385,46 @@ func TestDefaultLog(t *testing.T) {
 	// Ok, tests passed
 }
 
+func TestReopenFailed(t *testing.T) {
+	// Create output filename
+	logFile := filepath.Join(tempDir, "fail-reopen.log")
+
+	// Open log file
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open test log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+	// Set predefined PID
+	SetPID(stubPID)
+
+	// Print debug message, no output will be produced because debug is not enabled
+	Debug("Invisible message")
+
+	// Replace normal filename by filename includes non-existing directory
+	logger.logName = filepath.Join(tempDir, "this-dir-does-not-exist", "fail-reopen.log")
+
+	// Try to reopen on changed location
+	err := Reopen()
+	if err == nil {
+		// This should not happen, register abnormal behavior
+		t.Errorf("anormal situation - log reopened on non-existing path %q", logger.logName)
+
+		// So, close log
+		if err = Close(); err != nil {
+			panic("Cannot close log reopened on non-existing path: " + err.Error())
+		}
+
+		return
+	}
+
+	// Need to check error type
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("unexpected error returned by reopening on non-existing path %q: %v", logFile, err)
+	}
+
+	// Ok, test passed
+}
+
 //
 // log methods required only for testing
 //
