@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sort"
+	stdLog "log"
 )
 
 var tempDir string
@@ -256,6 +257,56 @@ func TestStatFunctions(t *testing.T) {
 	// Check for unexpected warnings produced by statistic function
 	if len(wrns) > len(expWrns) {
 		t.Errorf("extra warnings messages were found in the produced report: %#v", wrns[len(expWrns):])
+	}
+}
+
+func TestFlags(t *testing.T) {
+	// Dummy output file
+	logFile := os.DevNull
+
+	// Open dummy log
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open output file %q: %v", logFile, err)
+		t.FailNow()
+	}
+	defer Close()
+
+	flags := []int{
+		// Flags owned by the package
+		NoPID,
+
+		// Standard log package's flags https://pkg.go.dev/log#pkg-constants
+		stdLog.Ldate,
+		stdLog.Ltime,
+		stdLog.Lmicroseconds,
+		stdLog.Llongfile,
+		stdLog.Lshortfile,
+		stdLog.LUTC,
+		stdLog.Lmsgprefix,
+		// stdLog.LstdFlags - this is flag defined as Ldate | Ltime, so, it should not be tested separately
+	}
+
+	for _, flag := range flags {
+		// If this flag from always-set?
+		if flag & logFlagsAlways != 0 {
+			// Skip this flag
+			continue
+		}
+
+		// Get the current flags value
+		oldFlags := Flags()
+
+		// Set new flag
+		SetFlags(oldFlags|flag)
+
+		// Get new flags set
+		newFlags := Flags()
+
+		// Check correctness of old flags after set
+		if r := oldFlags ^ newFlags; r != flag {
+			t.Errorf("incorrect flags after set: oldSet(%#064b) ^ newSet(%#064b) = %#064b - want: %#064b",
+				oldFlags, newFlags, r, flag)
+		}
 	}
 }
 

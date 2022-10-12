@@ -46,7 +46,26 @@ var loggingTests = map[string]struct {
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
 		},
 	},
-	`01-without-debug`: {
+	`01-all-types-short`: {
+		// All types of messages with short function names
+		pre:	func() {
+			SetDebug(true)
+		},
+		flags:	NoFlags,
+		inputs:	[]logCall {
+			logCall{f: D, args: []any{0, `DEBUG`} },
+			logCall{f: I, args: []any{1, `INFO`} },
+			logCall{f: W, args: []any{2, `WARNING`} },
+			logCall{f: E, args: []any{3, `ERROR ` + errIsOk} },
+		},
+		expected: []string {
+			stubApp + `[` + stubPID + `]: <D> Test #0 - DEBUG log message`,
+			stubApp + `[` + stubPID + `]: Test #1 - INFO log message`,
+			stubApp + `[` + stubPID + `]: <WRN> Test #2 - WARNING log message`,
+			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+		},
+	},
+	`02-without-debug`: {
 		// All types of messages except debug
 		flags:	NoFlags,
 		inputs:	[]logCall {
@@ -61,7 +80,7 @@ var loggingTests = map[string]struct {
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
 		},
 	},
-	`02-with-NoPID`: {
+	`03-with-NoPID`: {
 		// All types of messages without PID
 		pre:	func() {
 			SetDebug(true)
@@ -80,7 +99,7 @@ var loggingTests = map[string]struct {
 			stubApp + `: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
 		},
 	},
-	`03-with-reopen`: {
+	`04-with-reopen`: {
 		// All types of messages except with reopening before each message except first
 		pre:	func() {
 			SetDebug(true)
