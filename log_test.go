@@ -40,11 +40,10 @@ func TestMain(m *testing.M) {
 	os.Exit(ret)
 }
 
-
 func TestLogging(t *testing.T) {
 	// Make sorted list of test names
-	testNames := make([]string, 0, len(tests))
-	for testN := range tests {
+	testNames := make([]string, 0, len(loggingTests))
+	for testN := range loggingTests {
 		testNames = append(testNames, testN)
 	}
 	// Sort it
@@ -53,13 +52,10 @@ func TestLogging(t *testing.T) {
 	// Run tests
 	for _, testN := range testNames {
 		// Get test configuration
-		test := tests[testN]
+		test := loggingTests[testN]
 
 		// Create output filename
 		file := filepath.Join(tempDir, fmt.Sprintf("log-test_%s.log", testN))
-
-		// Reinit internal package's logger variable to reset any configured parameters
-		logger = NewLogger()
 
 		// Open log file
 		if err := Open(file, stubApp, test.flags); err != nil {
@@ -140,6 +136,61 @@ func TestLogging(t *testing.T) {
 		}
 
 		nextTest:
+	}
+}
+
+func TestStatFunctions(t *testing.T) {
+	// Dummy output file
+	logFile := os.DevNull
+
+	// Open log file
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open output file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	//
+	// Create statistic functions
+	//
+
+	// Counters for errors and warnings
+	errN, wrnN := 0, 0
+	// Errors and warnings messages that have to be produced by logging functions
+	errs, wrns := []string{}, []string{}
+
+	// Errors statistic function
+	errStat := func(format string, args ...any) {
+		// Increment errors counter
+		errN++
+		// "Print" data to error messages
+		errs = append(errs, fmt.Sprintf(format, args...))
+	}
+
+	// Warnings statistic function
+	wrnStat := func(format string, args ...any) {
+		// Increment errors counter
+		wrnN++
+		// "Print" data to error messages
+		wrns = append(wrns, fmt.Sprintf(format, args...))
+	}
+
+	// Set statistic functions to log object
+	SetStatFuncs(&StatFuncs{Error: errStat, Warning: wrnStat})
+
+	//
+	// Run tests set
+	//
+	for i, call := range statisticTests {
+		// Make suitable arguments to call
+		args := append(append([]any{}, any(i)), call.args...)
+
+		call.f(stubLogFormat, args...)
+	}
+
+	// Close log file
+	if err := Close(); err != nil {
+		t.Errorf("cannot close test log file %q: %v", logFile, err)
+		t.FailNow()
 	}
 }
 

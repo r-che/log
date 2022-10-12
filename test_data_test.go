@@ -10,7 +10,13 @@ type logCall struct {
 
 const stubLogFormat = `Test #%d - %s log message`
 
-var tests = map[string]struct {
+var statisticTests = []logCall {
+	{f: Debug, args: []any{"Statistic test - DEBUG"} },
+	{f: Warn, args: []any{"Statistic test - WARNING"} },
+	{f: Err, args: []any{"Statistic test - ERROR (It's OK - this is testing error messages)"} },
+}
+
+var loggingTests = map[string]struct {
 	pre			func()
 	forEach		func(int) error
 	flags		int
