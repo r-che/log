@@ -367,6 +367,24 @@ func TestFailOpen(t *testing.T) {
 	// Ok, test passed
 }
 
+func TestDefaultLog(t *testing.T) {
+	// Open default log
+	if err := Open(DefaultLog, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot log on default logger: %v", err)
+		t.FailNow()
+	}
+
+	// Print debug message, no output will be produced because debug is not enabled
+	Debug("Invisible message")
+
+	// Test closing
+	if err := Close(); err != nil {
+		t.Errorf("cannot close log on default logger: %v", err)
+	}
+
+	// Ok, tests passed
+}
+
 //
 // log methods required only for testing
 //
