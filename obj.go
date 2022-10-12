@@ -34,6 +34,9 @@ type Logger struct {
 	wrnEventStat statFunc
 }
 
+// Auxiliary variable to avoid tests termination on Fatal() function
+var fatalDoExit = true
+
 func NewLogger() *Logger {
 	// By default print log messages to default logger target
 	return &Logger{
@@ -60,7 +63,10 @@ func (l *Logger) Open(file, prefix string, flags int) error {
 				// Wait for messages
 				case msg := <-l.msgCh:
 					if msg.fatal {
-						l.logger.Fatalf(msg.format, msg.args...)
+						// XXX This condition is not satisfied only in tests
+						if fatalDoExit {
+							l.logger.Fatalf(msg.format, msg.args...)
+						}
 					}
 					l.logger.Printf(msg.format, msg.args...)
 

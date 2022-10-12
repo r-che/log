@@ -10,11 +10,19 @@ import (
 	stdLog "log"
 )
 
-var tempDir string
 const (
 	stubPID	=	"19851996"
 	stubApp	=	"test-log-app"
 )
+
+var tempDir string
+const stubLogFormat = `Test #%d - %s log message`
+const errIsOk = `(It's OK - it's just a test message)`
+
+// Disable exiting on fatal log messages
+func init() {
+	fatalDoExit = false
+}
 
 func TestMain(m *testing.M) {
 	// Temporary directory to write test logs
@@ -308,6 +316,20 @@ func TestFlags(t *testing.T) {
 				oldFlags, newFlags, r, flag)
 		}
 	}
+}
+
+func TestFatal(t *testing.T) {
+	// Dummy output file
+	logFile := os.DevNull
+
+	// Open dummy log
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open output file %q: %v", logFile, err)
+		t.FailNow()
+	}
+	defer Close()
+
+	Fatal("Test fatal error %s", errIsOk)
 }
 
 //

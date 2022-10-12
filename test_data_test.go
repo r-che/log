@@ -17,9 +17,6 @@ const (
 	tFatal
 )
 
-const stubLogFormat = `Test #%d - %s log message`
-const errIsOk = `(It's OK - this is testing error messages)`
-
 var loggingTests = map[string]struct {
 	pre			func()
 	forEach		func(int) error
@@ -38,12 +35,14 @@ var loggingTests = map[string]struct {
 			logCall{f: Info, args: []any{1, `INFO`} },
 			logCall{f: Warn, args: []any{2, `WARNING`} },
 			logCall{f: Err, args: []any{3, `ERROR ` + errIsOk} },
+			logCall{f: Fatal, args: []any{4, `FATAL ` + errIsOk} },
 		},
 		expected: []string {
 			stubApp + `[` + stubPID + `]: <D> Test #0 - DEBUG log message`,
 			stubApp + `[` + stubPID + `]: Test #1 - INFO log message`,
 			stubApp + `[` + stubPID + `]: <WRN> Test #2 - WARNING log message`,
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+			stubApp + `[` + stubPID + `]: <FATAL> Test #4 - FATAL ` + errIsOk + ` log message`,
 		},
 	},
 	`01-all-types-short`: {
@@ -57,12 +56,14 @@ var loggingTests = map[string]struct {
 			logCall{f: I, args: []any{1, `INFO`} },
 			logCall{f: W, args: []any{2, `WARNING`} },
 			logCall{f: E, args: []any{3, `ERROR ` + errIsOk} },
+			logCall{f: F, args: []any{4, `FATAL ` + errIsOk} },
 		},
 		expected: []string {
 			stubApp + `[` + stubPID + `]: <D> Test #0 - DEBUG log message`,
 			stubApp + `[` + stubPID + `]: Test #1 - INFO log message`,
 			stubApp + `[` + stubPID + `]: <WRN> Test #2 - WARNING log message`,
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+			stubApp + `[` + stubPID + `]: <FATAL> Test #4 - FATAL ` + errIsOk + ` log message`,
 		},
 	},
 	`02-without-debug`: {
@@ -73,11 +74,13 @@ var loggingTests = map[string]struct {
 			logCall{f: Info, args: []any{1, `INFO`} },
 			logCall{f: Warn, args: []any{2, `WARNING`} },
 			logCall{f: Err, args: []any{3, `ERROR ` + errIsOk} },
+			logCall{f: Fatal, args: []any{4, `FATAL ` + errIsOk} },
 		},
 		expected: []string {
 			stubApp + `[` + stubPID + `]: Test #1 - INFO log message`,
 			stubApp + `[` + stubPID + `]: <WRN> Test #2 - WARNING log message`,
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+			stubApp + `[` + stubPID + `]: <FATAL> Test #4 - FATAL ` + errIsOk + ` log message`,
 		},
 	},
 	`03-with-NoPID`: {
@@ -91,12 +94,14 @@ var loggingTests = map[string]struct {
 			logCall{f: Info, args: []any{1, `INFO`} },
 			logCall{f: Warn, args: []any{2, `WARNING`} },
 			logCall{f: Err, args: []any{3, `ERROR ` + errIsOk} },
+			logCall{f: Fatal, args: []any{4, `FATAL ` + errIsOk} },
 		},
 		expected: []string {
 			stubApp + `: <D> Test #0 - DEBUG log message`,
 			stubApp + `: Test #1 - INFO log message`,
 			stubApp + `: <WRN> Test #2 - WARNING log message`,
 			stubApp + `: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+			stubApp + `: <FATAL> Test #4 - FATAL ` + errIsOk + ` log message`,
 		},
 	},
 	`04-with-reopen`: {
@@ -127,6 +132,7 @@ var loggingTests = map[string]struct {
 			logCall{f: Info, args: []any{1, `INFO`} },
 			logCall{f: Warn, args: []any{2, `WARNING`} },
 			logCall{f: Err, args: []any{3, `ERROR ` + errIsOk} },
+			logCall{f: Fatal, args: []any{4, `FATAL ` + errIsOk} },
 		},
 		expected: []string {
 			stubApp + `[` + stubPID + `]: <D> Test #0 - DEBUG log message`,
@@ -136,6 +142,8 @@ var loggingTests = map[string]struct {
 			stubApp + `[` + stubPID + `]: <WRN> Test #2 - WARNING log message`,
 			stubApp + `[` + stubPID + `]: <WRN> Test Reopen() #3`,
 			stubApp + `[` + stubPID + `]: <ERR> Test #3 - ERROR ` + errIsOk + ` log message`,
+			stubApp + `[` + stubPID + `]: <WRN> Test Reopen() #4`,
+			stubApp + `[` + stubPID + `]: <FATAL> Test #4 - FATAL ` + errIsOk + ` log message`,
 		},
 	},
 }
@@ -155,4 +163,5 @@ var statisticTests = []logCall {
 	{f: Debug, args: []any{`Statistic test - INFO message #2`} },
 	{f: Warn, args: []any{`Statistic test - WARNING #2`}, fType: tWarn },
 	{f: Debug, args: []any{`Statistic test - INFO message #3`} },
+	{f: Fatal, args: []any{`Statistic test - FATAL message #3`} },
 }
