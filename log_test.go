@@ -23,8 +23,6 @@ func TestMain(m *testing.M) {
 		panic("Cannot create temporary directory for tests: " + err.Error())
 	}
 
-	// TODO Need to print messge - do not worry about <ERR> messages to STDERR
-
 	// Run tests
 	ret := m.Run()
 
@@ -117,7 +115,7 @@ func TestLogging(t *testing.T) {
 		// Compare resulting lines with expected
 		for ln := 0; ln < len(test.expected); ln++ {
 			// Check that produced[ln] exists
-			if ln + 1 > len(produced) {
+			if ln == len(produced) {
 				t.Errorf("[%s:%d] expected string %q but no other lines in the produced file %q",
 					testN, ln, test.expected[ln], file)
 				// Skip the rest of the test
@@ -149,6 +147,9 @@ func TestStatFunctions(t *testing.T) {
 		t.FailNow()
 	}
 
+	// Enable debug output to produce more messages
+	SetDebug(true)
+
 	//
 	// Create statistic functions
 	//
@@ -174,6 +175,10 @@ func TestStatFunctions(t *testing.T) {
 		wrns = append(wrns, fmt.Sprintf(format, args...))
 	}
 
+	// Expected statistic results
+	expErrs, expWrns := []string{}, []string{}
+	expEN, expWN := 0, 0
+
 	// Set statistic functions to log object
 	SetStatFuncs(&StatFuncs{Error: errStat, Warning: wrnStat})
 
@@ -184,13 +189,73 @@ func TestStatFunctions(t *testing.T) {
 		// Make suitable arguments to call
 		args := append(append([]any{}, any(i)), call.args...)
 
+		// Call logging function
 		call.f(stubLogFormat, args...)
-	}
 
+		// Update expectations
+		switch call.fType {
+		case tErr:
+			expEN++
+			expErrs = append(expErrs, fmt.Sprintf(stubLogFormat, args...))
+		case tWarn:
+			expWN++
+			expWrns = append(expWrns, fmt.Sprintf(stubLogFormat, args...))
+		case tDebug, tInfo:
+			// Do not register agruments
+		default:
+			panic(fmt.Sprintf("Unknown log function type: %d", call.fType))
+		}
+
+	}
 	// Close log file
 	if err := Close(); err != nil {
 		t.Errorf("cannot close test log file %q: %v", logFile, err)
 		t.FailNow()
+	}
+
+	//
+	// Check statistic results
+	//
+
+	// Check errors
+	for mn := 0; mn < len(expErrs); mn++ {
+		// Check that expected lines can exist in produced errors
+		if mn == len(errs) {
+			t.Errorf("[%d] expected error string %q but no other lines in the statistic report list",
+				mn, expErrs[mn])
+			// Skip the rest of the test
+			goto checkWarns
+		}
+
+		// Compare messages
+		if expErrs[mn] != errs[mn] {
+			t.Errorf("[%d] want %q, got %q", mn, expErrs[mn], errs[mn])
+		}
+	}
+	// Check for unexpected errors produced by statistic function
+	if len(errs) > len(expErrs) {
+		t.Errorf("extra error messages were found in the produced report: %#v", errs[len(expErrs):])
+	}
+
+	// Check warnings
+	checkWarns:
+	for mn := 0; mn < len(expWrns); mn++ {
+		// Check that expected lines can exist in produced warnings
+		if mn == len(wrns) {
+			t.Errorf("[%d] expected warnings string %q but no other lines in the statistic report list",
+				mn, expWrns[mn])
+			// Skip the rest of the test
+			break
+		}
+
+		// Compare messages
+		if expWrns[mn] != wrns[mn] {
+			t.Errorf("[%d] want %q, got %q", mn, expWrns[mn], wrns[mn])
+		}
+	}
+	// Check for unexpected warnings produced by statistic function
+	if len(wrns) > len(expWrns) {
+		t.Errorf("extra warnings messages were found in the produced report: %#v", wrns[len(expWrns):])
 	}
 }
 
