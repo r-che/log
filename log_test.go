@@ -84,16 +84,9 @@ func TestLogging(t *testing.T) {
 		}
 
 		// Convert data to list of strings
-		produced := strings.Split(string(data), "\n")
-
-		// Normally, produced contains empty line at the end because the must have "\n" at the end
-		if len(produced) > 0 {
-			if last := produced[len(produced) - 1]; last != "" {
-				t.Errorf("[%s] log file %q does not end with a new line", testN, file)
-			} else {
-				// Remove empty line from produced
-				produced = produced[0:len(produced)-1]
-			}
+		produced, err := removeNewLine(strings.Split(string(data), "\n"))
+		if err != nil {
+			t.Errorf("[%s] %v - %s", testN, err, file)
 		}
 
 		// Compare resulting lines with expected
@@ -118,6 +111,22 @@ func TestLogging(t *testing.T) {
 		}
 
 		nextTest:
+	}
+}
+
+func removeNewLine(produced []string) ([]string, error) {
+	if len(produced) == 0 {
+		// Nothing to handle
+		return produced, nil
+	}
+
+	// Normally, produced contains empty line at the end because the must have "\n" at the end
+	if last := produced[len(produced) - 1]; last != "" {
+		// The list line is not empty - that means that the log file was not ended by "\n"
+		return nil, fmt.Errorf(`log file was not ended by "\n"`)
+	} else {
+		// Remove empty line from produced and return
+		return produced[0:len(produced)-1], nil
 	}
 }
 
@@ -177,37 +186,52 @@ func TestStatFunctions(t *testing.T) {
 	// Create statistic functions
 	//
 
-	// Counters for errors and warnings
-	errN, wrnN := 0, 0
 	// Errors and warnings messages that have to be produced by logging functions
 	errs, wrns := []string{}, []string{}
 
 	// Errors statistic function
 	errStat := func(format string, args ...any) {
-		// Increment errors counter
-		errN++
 		// "Print" data to error messages
 		errs = append(errs, fmt.Sprintf(format, args...))
 	}
 
 	// Warnings statistic function
 	wrnStat := func(format string, args ...any) {
-		// Increment errors counter
-		wrnN++
 		// "Print" data to error messages
 		wrns = append(wrns, fmt.Sprintf(format, args...))
 	}
-
-	// Expected statistic results
-	expErrs, expWrns := []string{}, []string{}
-	expEN, expWN := 0, 0
 
 	// Set statistic functions to log object
 	SetStatFuncs(&StatFuncs{Error: errStat, Warning: wrnStat})
 
 	//
-	// Run tests set
+	// Run tests, get expected statistic results
 	//
+	expErrs, expWrns := runStatsTests()
+
+	//
+	// Close log file
+	//
+	if err := Close(); err != nil {
+		t.Errorf("cannot close test log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	//
+	// Check results
+	//
+
+	// Check errors
+	checkStatTestResults(t, errs, expErrs)
+
+	// Check warnings
+	checkStatTestResults(t, wrns, expWrns)
+}
+
+func runStatsTests() ([]string, []string) {
+	// Expected statistic results
+	expErrs, expWrns := []string{}, []string{}
+
 	for i, call := range statisticTests {
 		// Make suitable arguments to call
 		args := append(append([]any{}, any(i)), call.args...)
@@ -218,10 +242,8 @@ func TestStatFunctions(t *testing.T) {
 		// Update expectations
 		switch call.fType {
 		case tErr:
-			expEN++
 			expErrs = append(expErrs, fmt.Sprintf(stubLogFormat, args...))
 		case tWarn:
-			expWN++
 			expWrns = append(expWrns, fmt.Sprintf(stubLogFormat, args...))
 		case tDebug, tInfo:
 			// Do not register arguments
@@ -229,55 +251,30 @@ func TestStatFunctions(t *testing.T) {
 			panic(fmt.Sprintf("Unknown log function type: %d", call.fType))
 		}
 	}
-	// Close log file
-	if err := Close(); err != nil {
-		t.Errorf("cannot close test log file %q: %v", logFile, err)
-		t.FailNow()
-	}
 
-	//
-	// Check statistic results
-	//
+	return expErrs, expWrns
+}
 
-	// Check errors
-	for mn := 0; mn < len(expErrs); mn++ {
-		// Check that expected lines can exist in produced errors
-		if mn == len(errs) {
-			t.Errorf("[%d] expected error string %q but no other lines in the statistic report list",
-				mn, expErrs[mn])
-			// Skip the rest of the test
-			goto checkWarns
+func checkStatTestResults(t *testing.T, gotData, expData []string) {
+	// Check expected data
+	for mn := 0; mn < len(expData); mn++ {
+		// Check that expected lines can exist in produced log messages
+		if mn == len(gotData) {
+			t.Errorf("expected string %q but no other lines in the statistic report list",
+				expData[mn])
+			// Return now - no point to run other checks
+			return
 		}
 
 		// Compare messages
-		if expErrs[mn] != errs[mn] {
-			t.Errorf("[%d] want %q, got %q", mn, expErrs[mn], errs[mn])
+		if expData[mn] != gotData[mn] {
+			t.Errorf("want %q, got %q", expData[mn], gotData[mn])
 		}
-	}
-	// Check for unexpected errors produced by statistic function
-	if len(errs) > len(expErrs) {
-		t.Errorf("extra error messages were found in the produced report: %#v", errs[len(expErrs):])
 	}
 
-	// Check warnings
-	checkWarns:
-	for mn := 0; mn < len(expWrns); mn++ {
-		// Check that expected lines can exist in produced warnings
-		if mn == len(wrns) {
-			t.Errorf("[%d] expected warnings string %q but no other lines in the statistic report list",
-				mn, expWrns[mn])
-			// Skip the rest of the test
-			break
-		}
-
-		// Compare messages
-		if expWrns[mn] != wrns[mn] {
-			t.Errorf("[%d] want %q, got %q", mn, expWrns[mn], wrns[mn])
-		}
-	}
-	// Check for unexpected warnings produced by statistic function
-	if len(wrns) > len(expWrns) {
-		t.Errorf("extra warnings messages were found in the produced report: %#v", wrns[len(expWrns):])
+	// Check for unexpected data produced by statistic function
+	if len(gotData) > len(expData) {
+		t.Errorf("extra messages were found in the produced report: %#v", gotData[len(expData):])
 	}
 }
 
