@@ -224,12 +224,11 @@ func (l *Logger) setFlags(prefix string, flags int) {
 	if flags & NoPID == 0 {
 		// Print PID in each log line
 		l.logPrefix = fmt.Sprintf("%s[%d]: ", prefix, os.Getpid())
-	} else {
-		// PID should not be printed
-		if prefix != "" {
-			l.logPrefix = fmt.Sprintf("%s: ", prefix)
-		} // else - do not print any prefix
-	}
+	} else
+	// PID should not be printed
+	if prefix != "" {
+		l.logPrefix = fmt.Sprintf("%s: ", prefix)
+	} // else - do not print any prefix
 
 	// Apply mandatory flags
 	l.logFlags = flags | logFlagsAlways
