@@ -66,41 +66,14 @@ func TestLogging(t *testing.T) {
 		// Create output filename
 		file := filepath.Join(tempDir, fmt.Sprintf("log-test_%s.log", testN))
 
-		// Open log file
-		if err := Open(file, stubApp, test.flags); err != nil {
-			t.Errorf("[%s] cannot open test log file: %v", testN, err)
-			t.FailNow()
-		}
-		// Set predefined PID
-		SetPID(stubPID)
-
-		// Call pre() if exists
-		if test.pre != nil {
-			test.pre()
-		}
-
-		// Run log functions from inputs
-		for i, input := range test.inputs {
-			// Call forEach() if exists
-			if test.forEach != nil {
-				if err := test.forEach(i); err != nil {
-					t.Errorf("[%s:%d] test.forEach failed: %v", testN, i, err)
-					t.FailNow()
-				}
-			}
-
-			// Write intput to log
-			input.f(stubLogFormat, input.args...)
-		}
-
-		// Close opened file
-		if err := Close(); err != nil {
-			t.Errorf("[%s] cannot close test log file: %v", testN, err)
+		// Write test log data to file to check with expected
+		if err := writeLogSample(testN, file); err != nil {
+			t.Errorf("%v", err)
 			t.FailNow()
 		}
 
 		//
-		// Compare produced with expected
+		// Compare produced log content with expected
 		//
 
 		// Reading test output
@@ -146,6 +119,45 @@ func TestLogging(t *testing.T) {
 
 		nextTest:
 	}
+}
+
+func writeLogSample(name, file string) error {
+	// Get test configuration
+	test := loggingTests[name]
+
+	// Open log file
+	if err := Open(file, stubApp, test.flags); err != nil {
+		return fmt.Errorf("[%s] cannot open test log file: %w", name, err)
+	}
+
+	// Set predefined PID
+	SetPID(stubPID)
+
+	// Call pre() if exists
+	if test.pre != nil {
+		test.pre()
+	}
+
+	// Run log functions from inputs
+	for i, input := range test.inputs {
+		// Call forEach() if exists
+		if test.forEach != nil {
+			if err := test.forEach(i); err != nil {
+				return fmt.Errorf("[%s:%d] test.forEach failed: %v", name, i, err)
+			}
+		}
+
+		// Write intput to log
+		input.f(stubLogFormat, input.args...)
+	}
+
+	// Close opened file
+	if err := Close(); err != nil {
+		return fmt.Errorf("[%s] cannot close test log file: %v", name, err)
+	}
+
+	// OK
+	return nil
 }
 
 func TestStatFunctions(t *testing.T) {
