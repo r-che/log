@@ -37,8 +37,8 @@ func Flags() int {
 	return logger.Flags()
 }
 
-func SetFlags(flags int) {
-	logger.SetFlags(flags)
+func SetFlags(flags int) error {
+	return logger.SetFlags(flags)
 }
 
 func SetDebug(v bool) {

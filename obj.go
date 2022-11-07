@@ -88,9 +88,9 @@ func (l *Logger) Flags() int {
 	return l.logFlags
 }
 
-func (l *Logger) SetFlags(flags int) {
+func (l *Logger) SetFlags(flags int) error {
 	l.setFlags(l.origPrefix, flags)
-	l.Reopen()
+	return l.Reopen()
 }
 
 func (l *Logger) SetDebug(v bool) {
@@ -179,7 +179,9 @@ func (l *Logger) Close() error {
 
 func (l *Logger) Reopen() error {
 	// Close opened log file
-	l.Close()
+	if err := l.Close(); err != nil {
+		return err
+	}
 
 	// Open log file again
 	if err := l.openLog(); err != nil {

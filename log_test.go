@@ -279,7 +279,11 @@ func TestFlags(t *testing.T) {
 		t.Errorf("cannot open output file %q: %v", logFile, err)
 		t.FailNow()
 	}
-	defer Close()
+	defer func() {
+		if err := Close(); err != nil {
+			stdLog.Fatalf("Cannot close %v file: %v", os.DevNull, err)
+		}
+	}()
 
 	flags := []int{
 		// Flags owned by the package
@@ -307,7 +311,10 @@ func TestFlags(t *testing.T) {
 		oldFlags := Flags()
 
 		// Set new flag
-		SetFlags(oldFlags|flag)
+		if err := SetFlags(oldFlags|flag); err != nil {
+			t.Errorf("cannot set flags for log: %v", err)
+			t.FailNow()
+		}
 
 		// Get new flags set
 		newFlags := Flags()
@@ -329,7 +336,11 @@ func TestFatal(t *testing.T) {
 		t.Errorf("cannot open output file %q: %v", logFile, err)
 		t.FailNow()
 	}
-	defer Close()
+	defer func() {
+		if err := Close(); err != nil {
+			stdLog.Fatalf("Cannot close %v file: %v", os.DevNull, err)
+		}
+	}()
 
 	Fatal("Test fatal error %s", errIsOk)
 }
