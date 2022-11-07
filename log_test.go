@@ -257,6 +257,7 @@ func runStatsTests() ([]string, []string) {
 	return expErrs, expWrns
 }
 
+//nolint:thelper
 func checkStatTestResults(t *testing.T, gotData, expData []string) {
 	// Check expected data
 	for mn := 0; mn < len(expData); mn++ {

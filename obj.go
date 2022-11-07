@@ -177,7 +177,9 @@ func (l *Logger) Close() error {
 
 	// Close opened file
 	if closer, ok := l.logger.Writer().(io.Closer); ok {
-		return closer.Close()
+		if err := closer.Close(); err != nil {
+			return fmt.Errorf("cannot close log file: %w", err)
+		}
 	}
 
 	// OK
@@ -208,7 +210,7 @@ func (l *Logger) openLog() error {
 	} else {
 		logFd, err := os.OpenFile(l.logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, defaultPermMode)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot open log file: %w", err)
 		}
 
 		l.logger = log.New(logFd, "", log.LstdFlags)
