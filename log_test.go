@@ -228,7 +228,6 @@ func TestStatFunctions(t *testing.T) {
 		default:
 			panic(fmt.Sprintf("Unknown log function type: %d", call.fType))
 		}
-
 	}
 	// Close log file
 	if err := Close(); err != nil {
@@ -459,8 +458,8 @@ func (l *Logger) SetPID(pidStr string) {
 
 	// Replace prefix by predefined value
 	l.logger.SetPrefix(fmt.Sprintf("%s[%s]: ", l.origPrefix, pidStr))
-
 }
+
 func SetPID(pidStr string) {
 	logger.SetPID(pidStr)
 }
