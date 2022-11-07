@@ -35,7 +35,7 @@ type Logger struct {
 	wrnEventStat statFunc
 }
 
-// Auxiliary variable to avoid tests termination on Fatal() function
+//nolint:gochecknoglobals // Auxiliary variable to avoid tests termination on Fatal() function
 var fatalDoExit = true
 
 func NewLogger() *Logger {

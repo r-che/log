@@ -24,8 +24,7 @@ type StatFuncs struct {
 	Warning	statFunc
 }
 
-// Default logger
-
+//nolint:gochecknoglobals // Pointer to the default logger
 var logger *Logger
 
 func Open(file, prefix string, flags int) error {

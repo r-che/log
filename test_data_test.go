@@ -17,6 +17,7 @@ const (
 	tFatal
 )
 
+//nolint:gochecknoglobals // do not insert this data into the function body to keep the test code clear
 var loggingTests = map[string]struct {
 	pre			func()
 	forEach		func(int) error
@@ -148,6 +149,7 @@ var loggingTests = map[string]struct {
 	},
 }
 
+//nolint:gochecknoglobals // do not insert this data into the function body to keep the test code clear
 var statisticTests = []logCall {
 	{f: Debug, args: []any{`Statistic test - DEBUG #0`} },
 	{f: Warn, args: []any{`Statistic test - WARNING #0`}, fType: tWarn },

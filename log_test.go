@@ -17,6 +17,7 @@ const (
 	stubApp	=	"test-log-app"
 )
 
+//nolint:gochecknoglobals	// Temporary directory shared by all tests
 var tempDir string
 const stubLogFormat = `Test #%d - %s log message`
 const errIsOk = `(It's OK - it's just a test message)`
