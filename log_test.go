@@ -224,7 +224,7 @@ func TestStatFunctions(t *testing.T) {
 			expWN++
 			expWrns = append(expWrns, fmt.Sprintf(stubLogFormat, args...))
 		case tDebug, tInfo:
-			// Do not register agruments
+			// Do not register arguments
 		default:
 			panic(fmt.Sprintf("Unknown log function type: %d", call.fType))
 		}

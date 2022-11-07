@@ -191,7 +191,7 @@ func (l *Logger) Reopen() error {
 	// Start mesages processing
 	l.stpStrCh<-nil
 
-	// Log reopened successfuly
+	// Log reopened successfully
 	return nil
 }
 
