@@ -9,7 +9,8 @@ import (
 
 // Private constants
 const (
-	logFlagsAlways = log.Lmsgprefix
+	logFlagsAlways	=	log.Lmsgprefix
+	defaultPermMode	=	0o644
 )
 
 // Private types
@@ -205,7 +206,7 @@ func (l *Logger) openLog() error {
 	if l.logName == DefaultLog {
 		l.logger = log.Default()
 	} else {
-		logFd, err := os.OpenFile(l.logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		logFd, err := os.OpenFile(l.logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, defaultPermMode)
 		if err != nil {
 			return err
 		}

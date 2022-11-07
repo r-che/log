@@ -14,7 +14,7 @@ const (
 	// Create flags constants from left part of 32-bit number
 	// to avoid collision with flags from standard log package
 	// XXX Do not forget to update TestFlags function after adding or removing flags
-	NoPID	= (1 << 31) >> iota
+	NoPID	= (1 << 31) >> iota	//nolint:gomnd // described above
 )
 
 // Public types
