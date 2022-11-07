@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"fmt"
+	"io"
 )
 
 // Private constants
@@ -174,7 +175,12 @@ func (l *Logger) Close() error {
 	}
 
 	// Close opened file
-	return l.logger.Writer().(*os.File).Close()
+	if closer, ok := l.logger.Writer().(io.Closer); ok {
+		return closer.Close()
+	}
+
+	// OK
+	return nil
 }
 
 func (l *Logger) Reopen() error {
