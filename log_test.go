@@ -21,8 +21,8 @@ var tempDir string
 const stubLogFormat = `Test #%d - %s log message`
 const errIsOk = `(It's OK - it's just a test message)`
 
-// Disable exiting on fatal log messages
-func init() {
+// Disable exiting on fatal log messages for testing purposes
+func init() {	//nolint:gochecknoinits
 	fatalDoExit = false
 }
 
