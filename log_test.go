@@ -124,10 +124,10 @@ func removeNewLine(produced []string) ([]string, error) {
 	if last := produced[len(produced) - 1]; last != "" {
 		// The list line is not empty - that means that the log file was not ended by "\n"
 		return nil, fmt.Errorf(`log file was not ended by "\n"`)
-	} else {
-		// Remove empty line from produced and return
-		return produced[0:len(produced)-1], nil
 	}
+
+	// Remove empty line from produced and return
+	return produced[0:len(produced)-1], nil
 }
 
 func writeLogSample(name, file string) error {
@@ -152,7 +152,7 @@ func writeLogSample(name, file string) error {
 		// Call forEach() if exists
 		if test.forEach != nil {
 			if err := test.forEach(i); err != nil {
-				return fmt.Errorf("[%s:%d] test.forEach failed: %v", name, i, err)
+				return fmt.Errorf("[%s:%d] test.forEach failed: %w", name, i, err)
 			}
 		}
 
@@ -162,7 +162,7 @@ func writeLogSample(name, file string) error {
 
 	// Close opened file
 	if err := Close(); err != nil {
-		return fmt.Errorf("[%s] cannot close test log file: %v", name, err)
+		return fmt.Errorf("[%s] cannot close test log file: %w", name, err)
 	}
 
 	// OK
@@ -245,8 +245,9 @@ func runStatsTests() ([]string, []string) {
 			expErrs = append(expErrs, fmt.Sprintf(stubLogFormat, args...))
 		case tWarn:
 			expWrns = append(expWrns, fmt.Sprintf(stubLogFormat, args...))
-		case tDebug, tInfo:
-			// Do not register arguments
+		case tDebug, tInfo: // do not register arguments
+		case tFatal:
+			panic("Fatal cannot be handled")
 		default:
 			panic(fmt.Sprintf("Unknown log function type: %d", call.fType))
 		}

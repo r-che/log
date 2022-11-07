@@ -118,7 +118,7 @@ var loggingTests = map[string]struct {
 			Warn(`Test Reopen() #%d`, inputN)
 
 			if err := Reopen(); err != nil {
-				return fmt.Errorf(`Reopen() failed: %v`, err)
+				return fmt.Errorf(`Reopen() failed: %w`, err)
 			}
 
 			// Set fake PID again
