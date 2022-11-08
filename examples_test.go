@@ -30,21 +30,21 @@ func Example_logFileTest() {
 }
 
 func Example_reopenLog() {
-	log.Open("/tmp/test-app.log", "test-app", log.NoPID)
-	defer log.Close()
+	Open("/tmp/test-app.log", "test-app", NoPID)
+	defer Close()
 
-	log.I("Information log message before deletion of the log file")
+	I("Information log message before deletion of the log file")
 
 	os.Remove("/tmp/test-app.log") // remove log file on the fly
 
-	log.I("Information message to the deleted log file") // this message will be lost
+	I("Information message to the deleted log file") // this message will be lost
 
 	// Reopen log file
-	if err := log.Reopen(); err != nil {
+	if err := Reopen(); err != nil {
 		panic(err)
 	}
 
-	log.I("Log file succesfully reopened") // reopened file will start with this message
+	I("Log file succesfully reopened") // reopened file will start with this message
 
 	// If you run tail -f /tmp/test-app.log, you should get:
 	//
