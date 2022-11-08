@@ -24,6 +24,10 @@ type logMsg struct {
 	fatal bool
 }
 
+// A Logger represents an active logging object that generates lines of output to file
+// specified by the file parameter of the [Logger.Open] function. Each logging operation
+// makes a single call to the Writer's Write method. A Logger can be used simultaneously
+// from multiple goroutines; it guarantees to serialize access to the log file.
 type Logger struct {
 	logger		*log.Logger
 	logName		string
@@ -44,6 +48,8 @@ type Logger struct {
 //nolint:gochecknoglobals // Auxiliary variable to avoid tests termination on Fatal() function
 var fatalDoExit = true
 
+// NewLogger creates a new Logger. By default, the logger object has no writer object and must
+// be initialized using [Logger.Open] function.
 func NewLogger() *Logger {
 	// By default print log messages to default logger target
 	return &Logger{
@@ -52,6 +58,7 @@ func NewLogger() *Logger {
 	}
 }
 
+// Open calls [Open] on the l object.
 func (l *Logger) Open(file, prefix string, flags int) error {
 	l.logName = file
 
@@ -68,22 +75,22 @@ func (l *Logger) Open(file, prefix string, flags int) error {
 	go func() {
 		for {
 			select {
-				// Wait for messages
-				case msg := <-l.msgCh:
-					if msg.fatal {
-						// XXX This condition is not satisfied only in tests
-						if fatalDoExit {
-							l.logger.Fatalf(msg.format, msg.args...)
-						}
+			// Wait for messages
+			case msg := <-l.msgCh:
+				if msg.fatal {
+					// XXX This condition is not satisfied only in tests
+					if fatalDoExit {
+						l.logger.Fatalf(msg.format, msg.args...)
 					}
-					l.logger.Printf(msg.format, msg.args...)
+				}
+				l.logger.Printf(msg.format, msg.args...)
 
-				case <-l.stpStrCh:
-					// Send signal that stop message was received
-					l.stpStrCh <- nil
+			case <-l.stpStrCh:
+				// Send signal that stop message was received
+				l.stpStrCh <- nil
 
-					// Wait for start message
-					<-l.stpStrCh
+				// Wait for start message
+				<-l.stpStrCh
 			}
 		}
 	}()
@@ -92,41 +99,52 @@ func (l *Logger) Open(file, prefix string, flags int) error {
 	return nil
 }
 
+// Flags calls [Flags] on the l object.
 func (l *Logger) Flags() int {
 	return l.logFlags
 }
 
+// SetFlags calls [SetFlags] on the l object.
+//
+// NOTE: SetFlags must be called after calling l.Open, otherwise it will cause a panic.
 func (l *Logger) SetFlags(flags int) error {
 	l.setFlags(l.origPrefix, flags)
 	return l.Reopen()
 }
 
+// SetDebug calls [SetDebug] on the l object.
 func (l *Logger) SetDebug(v bool) {
 	l.debug = v
 }
 
+// SetStatFuncs calls [SetStatFuncs] on the l object.
 func (l *Logger) SetStatFuncs(ef, wf StatFunc) {
 	l.errEventStat = ef
 	l.wrnEventStat = wf
 }
 
+// D is an shortcut for Debug.
 func (l *Logger) D(format string, v ...any) {
 	if !l.debug {
 		return
 	}
 	l.msgCh <-&logMsg{format: "<D> " + format, args: v}
 }
+// Debug calls [Debug] on the l object.
 func (l *Logger) Debug(format string, v ...any) {
 	l.D(format, v...)
 }
 
+// I is an shortcut for Info.
 func (l *Logger) I(format string, v ...any) {
 	l.msgCh <-&logMsg{format: format, args: v}
 }
+// Info calls [Info] on the l object.
 func (l *Logger) Info(format string, v ...any) {
 	l.I(format, v...)
 }
 
+// W is an shortcut for Warn.
 func (l *Logger) W(format string, v ...any) {
 	l.msgCh <-&logMsg{format: "<WRN> " + format, args: v}
 
@@ -135,10 +153,12 @@ func (l *Logger) W(format string, v ...any) {
 		l.wrnEventStat(format, v...)
 	}
 }
+// Warn calls [Warn] on the l object.
 func (l *Logger) Warn(format string, v ...any) {
 	l.W(format, v...)
 }
 
+// E is an shortcut for Err.
 func (l *Logger) E(format string, v ...any) {
 	// If logger output is not stderr
 	if l.logger.Writer() != os.Stderr {
@@ -153,10 +173,12 @@ func (l *Logger) E(format string, v ...any) {
 		l.errEventStat(format, v...)
 	}
 }
+// Err calls [Err] on the l object.
 func (l *Logger) Err(format string, v ...any) {
 	l.E(format, v...)
 }
 
+// F is an shortcut for Fatal.
 func (l *Logger) F(format string, v ...any) {
 	// If logger output is not stderr
 	if l.logger.Writer() != os.Stderr {
@@ -166,10 +188,12 @@ func (l *Logger) F(format string, v ...any) {
 
 	l.msgCh <-&logMsg{format: "<FATAL> " + format, args: v, fatal: true}
 }
+// Fatal calls [Fatal] on the l object.
 func (l *Logger) Fatal(format string, v ...any) {
 	l.F(format, v...)
 }
 
+// Close calls [Close] on the l object.
 func (l *Logger) Close() error {
 	// Check for log already closed
 	if l.closed {
@@ -201,6 +225,7 @@ func (l *Logger) Close() error {
 	return nil
 }
 
+// Reopen calls [Reopen] on the l object.
 func (l *Logger) Reopen() error {
 	// Close opened log file
 	if err := l.Close(); err != nil {
