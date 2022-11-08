@@ -27,6 +27,7 @@ type Logger struct {
 	logPrefix	string
 	logFlags	int
 	debug		bool
+	closed		bool
 
 	msgCh		chan *logMsg
 	stpStrCh	chan any
@@ -43,6 +44,7 @@ func NewLogger() *Logger {
 	// By default print log messages to default logger target
 	return &Logger{
 		logger: log.Default(),
+		closed:	true,
 	}
 }
 
@@ -165,11 +167,17 @@ func (l *Logger) Fatal(format string, v ...any) {
 }
 
 func (l *Logger) Close() error {
+	// Check for log already closed
+	if l.closed {
+		return &ErrLogClosed
+	}
+
 	// Stop receiving messages
 	l.stpStrCh<-nil
 	// Wait acknowledge message from writer-goroutine
 	<-l.stpStrCh
 
+	// Check for empty name of the log file
 	if l.logName == "" {
 		// Standard logger was used, nothing to close
 		return nil
@@ -181,6 +189,9 @@ func (l *Logger) Close() error {
 			return fmt.Errorf("cannot close log file: %w", err)
 		}
 	}
+
+	// Set closed flag
+	l.closed = true
 
 	// OK
 	return nil
@@ -222,6 +233,9 @@ func (l *Logger) openLog() error {
 	// Configure default logger to print error/fatal messages to stderr
 	log.SetPrefix(l.logPrefix)
 	log.SetFlags(l.logFlags)
+
+	// Reset closed flag
+	l.closed = false
 
 	return nil
 }
