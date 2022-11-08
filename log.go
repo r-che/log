@@ -1,6 +1,6 @@
 package log
 
-// Public constants:
+// Exported constants:
 const (
 	// Default log target - empty line means that the default
 	// logger from the standart log package will be used
@@ -38,7 +38,7 @@ var logger *Logger
 // to the standard log module's Writer (usual - stderr). The value of the flags field
 // can be a bit combination of NoFlags, NoPID and flags of standard log package.
 //
-// Note: writing messages into the log before calling Open will cause a panic.
+// NOTE: writing messages into the log before calling Open will cause a panic.
 func Open(file, prefix string, flags int) error {
 	logger = NewLogger()
 	return logger.Open(file, prefix, flags)
@@ -50,6 +50,7 @@ func Flags() int {
 }
 
 // SetFlags sets a new set of flags.
+//
 // NOTE: SetFlags must be called after calling Open, otherwise it will cause a panic.
 func SetFlags(flags int) error {
 	return logger.SetFlags(flags)
