@@ -369,7 +369,7 @@ func TestFailOpen(t *testing.T) {
 	// Create filename includes non-existing directory
 	logFile := filepath.Join(tempDir, "this-dir-does-not-exist", "fail-open.log")
 
-	// Try to open log on this file
+	//nolint:errorlint // Try to open log on this file
 	switch err = Open(logFile, stubApp, NoFlags); err.(type) {
 	// No errors when error is expected
 	case nil:
@@ -382,7 +382,7 @@ func TestFailOpen(t *testing.T) {
 		}
 
 	// Expected error
-	case *ErrFile:
+	case *FileError:
 		// Additional error kind check
 		if !errors.Is(err, fs.ErrNotExist) {
 			t.Errorf("failed Open() error is %v, want - %v", err, fs.ErrNotExist)
@@ -432,7 +432,7 @@ func TestFailReopenNxFile(t *testing.T) {
 	// Replace normal filename by filename includes non-existing directory
 	logger.logName = filepath.Join(tempDir, "this-dir-does-not-exist", "fail-reopen.log")
 
-	// Try to reopen on changed location
+	//nolint:errorlint // Try to reopen on changed location
 	switch err := Reopen(); err.(type) {
 	// No errors when error is expected
 	case nil:
@@ -445,7 +445,7 @@ func TestFailReopenNxFile(t *testing.T) {
 		}
 
 	// Expected error
-	case *ErrFile:
+	case *FileError:
 		// Additional error kind check
 		if !errors.Is(err, fs.ErrNotExist) {
 			t.Errorf("failed Reopen() error is %v, want - %v", err, fs.ErrNotExist)
@@ -480,7 +480,7 @@ func TestFailReopenCloseErr(t *testing.T) {
 			" type: %T", logger.logger.Writer()))
 	}
 
-	// Try to reopen closed file
+	//nolint:errorlint // Try to reopen closed file
 	switch err := Reopen(); err.(type) {
 	// No errors when error is expected
 	case nil:
@@ -493,7 +493,7 @@ func TestFailReopenCloseErr(t *testing.T) {
 		}
 
 	// Expected error
-	case *ErrFile:
+	case *FileError:
 		// Additional error kind check
 		if !errors.Is(err, fs.ErrClosed) {
 			t.Errorf("failed Reopen() error is %v, want - %v", err, fs.ErrClosed)
@@ -523,7 +523,7 @@ func TestFailDoubleClose(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Double close - expected error
+	//nolint:errorlint // Double close - expected error
 	switch err := Close(); err {
 	// No errors but expected
 	case nil:
@@ -562,8 +562,8 @@ func TestFailClose(t *testing.T) {
 			" type: %T", logger.logger.Writer()))
 	}
 
-	// Try to call Close() which believes that the log file is not closed,
-	// and should get the a close error
+	//nolint:errorlint // Try to call Close() which believes that
+	// the log file is not closed, and should get the a close error
 	switch err := Close(); err.(type) {
 	// No errors but expected
 	case nil:
@@ -571,7 +571,7 @@ func TestFailClose(t *testing.T) {
 		t.FailNow()
 
 	// Expected error
-	case *ErrFile:
+	case *FileError:
 		// Additional error kind check
 		if !errors.Is(err, fs.ErrClosed) {
 			t.Errorf("failed Close() error is %v, want - %v", err, fs.ErrClosed)
@@ -586,9 +586,9 @@ func TestFailClose(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	const testErr = "test LogErr"
+	const testErr = "test OpError"
 
-	err := LogErr{errors.New(testErr)}
+	err := OpError{errors.New(testErr)}
 	if errStr := err.Error(); errStr != testErr {
 		t.Errorf("got error %q, want - %q", errStr, testErr)
 	}

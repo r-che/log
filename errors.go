@@ -2,20 +2,20 @@ package log
 
 import "fmt"
 
-type LogErr struct {
+type OpError struct {
 	err error
 }
-func (e *LogErr) Error() string {
+func (e *OpError) Error() string {
 	return e.err.Error()
 }
 
-type ErrFile struct {
-	LogErr
+type FileError struct {
+	OpError
 	fileErr	error
 }
-func (ef *ErrFile) Unwrap() error {
+func (ef *FileError) Unwrap() error {
 	return ef.fileErr
 }
-func NewErrFile(format string, err error) error {
-	return &ErrFile{LogErr{fmt.Errorf(format, err)}, err}
+func NewFileError(format string, err error) error {
+	return &FileError{OpError{fmt.Errorf(format, err)}, err}
 }

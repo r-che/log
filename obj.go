@@ -14,8 +14,8 @@ const (
 	defaultPermMode	=	0o644
 )
 
-// Errors
-var ErrLogClosed	=	LogErr{errors.New("log already closed/not opened yet")}
+// ErrLogClosed returned when Close is called on a closed or never opened log-file
+var ErrLogClosed	=	OpError{errors.New("log already closed/not opened yet")}
 
 // Private types
 type logMsg struct {
@@ -190,7 +190,7 @@ func (l *Logger) Close() error {
 	// Close opened file
 	if closer, ok := l.logger.Writer().(io.Closer); ok {
 		if err := closer.Close(); err != nil {
-			return NewErrFile("cannot close log file: %w", err)
+			return NewFileError("cannot close log file: %w", err)
 		}
 	}
 
@@ -225,7 +225,7 @@ func (l *Logger) openLog() error {
 	} else {
 		logFd, err := os.OpenFile(l.logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, defaultPermMode)
 		if err != nil {
-			return NewErrFile("cannot open log file: %w", err)
+			return NewFileError("cannot open log file: %w", err)
 		}
 
 		l.logger = log.New(logFd, "", log.LstdFlags)
