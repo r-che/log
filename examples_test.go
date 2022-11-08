@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+//nolint:testableexamples,errcheck	// Omit additional checks to keep the example clear
 // Example_logFileTest will print log messages to the /tmp/test-app.log file,
 // then it causes program exit with exit code 1
 func Example_logFileTest() {
@@ -29,7 +30,8 @@ func Example_logFileTest() {
 	//  test-app: <FATAL> [#5] FATAL log message
 }
 
-func Example_reopenLog() {
+//nolint:errcheck	// Omit additional checks to keep the example clear
+func Example_reopenLog() { //nolint:testableexamples
 	Open("/tmp/test-app.log", "test-app", NoPID)
 	defer Close()
 
@@ -44,7 +46,7 @@ func Example_reopenLog() {
 		panic(err)
 	}
 
-	I("Log file succesfully reopened") // reopened file will start with this message
+	I("Log file successfully reopened") // reopened file will start with this message
 
 	// If you run tail -f /tmp/test-app.log, you should get:
 	//
@@ -52,6 +54,7 @@ func Example_reopenLog() {
 	//  test-app: Information message to the deleted log file
 }
 
+//nolint:errcheck	// Omit additional checks to keep the example clear
 func Example_setStatFuncs() {
 	Open(os.DevNull, "test-app", NoPID)
 	defer Close()

@@ -8,7 +8,8 @@ Package key features are:
  * Support for setting statistics functions
  * Support for configuration with the flags of the standard [log] package
  * Debug function to write messages to the log file only when debug mode is enabled
- * By default, timestamps are disabled, to avoid duplicating timestamps when working under the supervisor (systemd and so on)
+ * By default, timestamps are disabled, to avoid duplicating timestamps when working
+   under the supervisor (systemd and so on)
  * Error and Fatal messages are duplicated in the stderr
  * Concurrency safe using goroutines + channels
 
