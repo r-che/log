@@ -18,10 +18,10 @@ const (
 )
 
 // Public types
-type statFunc func(string, ...any)
+type StatFunc func(string, ...any)
 type StatFuncs struct {
-	Error	statFunc
-	Warning	statFunc
+	Error	StatFunc
+	Warning	StatFunc
 }
 
 //nolint:gochecknoglobals // Pointer to the default logger

@@ -37,8 +37,8 @@ type Logger struct {
 	stpStrCh	chan any
 
 	// Statistic functions
-	errEventStat statFunc
-	wrnEventStat statFunc
+	errEventStat StatFunc
+	wrnEventStat StatFunc
 }
 
 //nolint:gochecknoglobals // Auxiliary variable to avoid tests termination on Fatal() function
