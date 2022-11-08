@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sort"
+	"io"
 	stdLog "log"
 )
 
@@ -369,7 +370,9 @@ func TestFailOpen(t *testing.T) {
 	logFile := filepath.Join(tempDir, "this-dir-does-not-exist", "fail-open.log")
 
 	// Try to open log on this file
-	if err = Open(logFile, stubApp, NoFlags); err == nil {
+	switch err = Open(logFile, stubApp, NoFlags); err.(type) {
+	// No errors when error is expected
+	case nil:
 		// This should not happen, register abnormal behavior
 		t.Errorf("anormal situation - log opened on non-existing path %q", logFile)
 
@@ -378,11 +381,15 @@ func TestFailOpen(t *testing.T) {
 			panic("Cannot close log opened on non-existing path: " + err.Error())
 		}
 
-		return
-	}
+	// Expected error
+	case *ErrFile:
+		// Additional error kind check
+		if !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("failed Open() error is %v, want - %v", err, fs.ErrNotExist)
+		}
 
-	// Need to check error type
-	if !errors.Is(err, fs.ErrNotExist) {
+	// Unexpected error
+	default:
 		t.Errorf("unexpected error returned opening log on non-existing path %q: %v", logFile, err)
 	}
 
@@ -407,7 +414,7 @@ func TestDefaultLog(t *testing.T) {
 	// Ok, tests passed
 }
 
-func TestReopenFailed(t *testing.T) {
+func TestFailReopenNxFile(t *testing.T) {
 	// Create output filename
 	logFile := filepath.Join(tempDir, "fail-reopen.log")
 
@@ -426,8 +433,9 @@ func TestReopenFailed(t *testing.T) {
 	logger.logName = filepath.Join(tempDir, "this-dir-does-not-exist", "fail-reopen.log")
 
 	// Try to reopen on changed location
-	err := Reopen()
-	if err == nil {
+	switch err := Reopen(); err.(type) {
+	// No errors when error is expected
+	case nil:
 		// This should not happen, register abnormal behavior
 		t.Errorf("anormal situation - log reopened on non-existing path %q", logger.logName)
 
@@ -436,15 +444,154 @@ func TestReopenFailed(t *testing.T) {
 			panic("Cannot close log reopened on non-existing path: " + err.Error())
 		}
 
-		return
-	}
+	// Expected error
+	case *ErrFile:
+		// Additional error kind check
+		if !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("failed Reopen() error is %v, want - %v", err, fs.ErrNotExist)
+		}
 
-	// Need to check error type
-	if !errors.Is(err, fs.ErrNotExist) {
+	// Unexpected error
+	default:
 		t.Errorf("unexpected error returned by reopening on non-existing path %q: %v", logFile, err)
 	}
 
 	// Ok, test passed
+}
+
+func TestFailReopenCloseErr(t *testing.T) {
+	// Dummy output file
+	logFile := os.DevNull
+
+	// Open log file
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open test log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	// Close log bypassing Close function
+	if closer, ok := logger.logger.Writer().(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			t.Errorf("cannot close log file %q: %v", logFile, err)
+			t.FailNow()
+		}
+	} else {
+		panic(fmt.Sprintf("logger object contains invalid writter that cannot be closed," +
+			" type: %T", logger.logger.Writer()))
+	}
+
+	// Try to reopen closed file
+	switch err := Reopen(); err.(type) {
+	// No errors when error is expected
+	case nil:
+		// This should not happen, register abnormal behavior
+		t.Errorf("anormal situation - log reopened on non-existing path %q", logger.logName)
+
+		// So, close log
+		if err = Close(); err != nil {
+			panic("Cannot close log reopened on non-existing path: " + err.Error())
+		}
+
+	// Expected error
+	case *ErrFile:
+		// Additional error kind check
+		if !errors.Is(err, fs.ErrClosed) {
+			t.Errorf("failed Reopen() error is %v, want - %v", err, fs.ErrClosed)
+		}
+
+	// Unexpected error
+	default:
+		t.Errorf("unexpected error returned by reopening closed file %q: %v", logFile, err)
+	}
+
+	// Ok, test passed
+}
+
+func TestFailDoubleClose(t *testing.T) {
+	// Create output filename
+	logFile := filepath.Join(tempDir, "fail-double-close.log")
+
+	// Open log file
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open test log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	// Normally close log file
+	if err := Close(); err != nil {
+		t.Errorf("cannot close log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	// Double close - expected error
+	switch err := Close(); err {
+	// No errors but expected
+	case nil:
+		t.Errorf("double Close() return no error but must")
+		t.FailNow()
+
+	// Expected error
+	case &ErrLogClosed:
+		// Nothing to do
+
+	// Some unexpected error
+	default:
+		t.Errorf("double Close() returned unexpected error: %v", err)
+		t.FailNow()
+	}
+}
+
+func TestFailClose(t *testing.T) {
+	// Create output filename
+	logFile := filepath.Join(tempDir, "fail-close.log")
+
+	// Open log file
+	if err := Open(logFile, stubApp, NoFlags); err != nil {
+		t.Errorf("cannot open test log file %q: %v", logFile, err)
+		t.FailNow()
+	}
+
+	// Close log bypassing Close function
+	if closer, ok := logger.logger.Writer().(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			t.Errorf("cannot close log file %q: %v", logFile, err)
+			t.FailNow()
+		}
+	} else {
+		panic(fmt.Sprintf("logger object contains invalid writter that cannot be closed," +
+			" type: %T", logger.logger.Writer()))
+	}
+
+	// Try to call Close() which believes that the log file is not closed,
+	// and should get the a close error
+	switch err := Close(); err.(type) {
+	// No errors but expected
+	case nil:
+		t.Errorf("failure of the Close() expected, but it did not fail")
+		t.FailNow()
+
+	// Expected error
+	case *ErrFile:
+		// Additional error kind check
+		if !errors.Is(err, fs.ErrClosed) {
+			t.Errorf("failed Close() error is %v, want - %v", err, fs.ErrClosed)
+		}
+		// OK
+
+	// Some unexpected error
+	default:
+		t.Errorf("Close() returned unexpected error: %v (%T) %#v", err, err, err)
+		t.FailNow()
+	}
+}
+
+func TestError(t *testing.T) {
+	const testErr = "test LogErr"
+
+	err := LogErr{errors.New(testErr)}
+	if errStr := err.Error(); errStr != testErr {
+		t.Errorf("got error %q, want - %q", errStr, testErr)
+	}
 }
 
 //
