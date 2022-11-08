@@ -105,9 +105,9 @@ func (l *Logger) SetDebug(v bool) {
 	l.debug = v
 }
 
-func (l *Logger) SetStatFuncs(sf *StatFuncs) {
-	l.errEventStat = sf.Error
-	l.wrnEventStat = sf.Warning
+func (l *Logger) SetStatFuncs(ef, wf StatFunc) {
+	l.errEventStat = ef
+	l.wrnEventStat = wf
 }
 
 func (l *Logger) D(format string, v ...any) {

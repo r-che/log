@@ -17,7 +17,11 @@ const (
 	NoPID	= (1 << 31) >> iota	//nolint:gomnd // described above
 )
 
+//
 // Public types
+//
+
+// StatFunc defines the interface for error and warning statistics functions
 type StatFunc func(string, ...any)
 type StatFuncs struct {
 	Error	StatFunc
@@ -44,8 +48,8 @@ func SetDebug(v bool) {
 	logger.SetDebug(v)
 }
 
-func SetStatFuncs(sf *StatFuncs) {
-	logger.SetStatFuncs(sf)
+func SetStatFuncs(ef, wf StatFunc) {
+	logger.SetStatFuncs(ef, wf)
 }
 
 func D(format string, v ...any) {

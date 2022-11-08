@@ -204,7 +204,7 @@ func TestStatFunctions(t *testing.T) {
 	}
 
 	// Set statistic functions to log object
-	SetStatFuncs(&StatFuncs{Error: errStat, Warning: wrnStat})
+	SetStatFuncs(errStat, wrnStat)
 
 	//
 	// Run tests, get expected statistic results
