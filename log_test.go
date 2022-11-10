@@ -18,34 +18,51 @@ const (
 	stubApp	=	"test-log-app"
 )
 
-//nolint:gochecknoglobals	// Temporary directory shared by all tests
-var tempDir string
-const stubLogFormat = `Test #%d - %s log message`
-const errIsOk = `(It's OK - it's just a test message)`
+const (
+	stubLogFormat	=	`Test #%d - %s log message`
+	errIsOk			=	`(It's OK - it's just a test message)`
+	tempLogPrefix	=	`go-test-rche-log.*`
+)
 
 // Disable exiting on fatal log messages for testing purposes
 func init() {	//nolint:gochecknoinits
 	fatalDoExit = false
 }
 
+// tempDir creates temporary directory inside of the temporary root directory configured by TestMain
+var tempDir func() string //nolint:gochecknoglobals
+
 func TestMain(m *testing.M) {
-	// Temporary directory to write test logs
+	// Create root temporary directory
 	var err error
-	tempDir, err = os.MkdirTemp("", `go-test-rche-log.*`)
+	tempRoot, err := os.MkdirTemp("", tempLogPrefix)
 	if err != nil {
-		panic("Cannot create temporary directory for tests: " + err.Error())
+		panic("Cannot create root temporary directory for tests: " + err.Error())
 	}
 
+	// Initiate tempDir function to create temporary directories inside tempRoot
+	tempDir = func() string {
+		dir, err := os.MkdirTemp(tempRoot, "subtest.*")
+		if err != nil {
+			panic("Cannot create temporary directory for tests: " + err.Error())
+		}
+
+		return dir
+	}
+
+	//
 	// Run tests
+	//
 	ret := m.Run()
 
 	// If all tests passed
 	if ret == 0 {
 		// Remove temporary data
-		os.RemoveAll(tempDir)
+		os.RemoveAll(tempRoot)
 	} else {
-		// Print notification where produced data can be found
-		fmt.Fprintf(os.Stderr, "Tests NOT passed, you can review produced data in: %s\n", tempDir)
+		// Keep produced data to investigation, print notification where it can be found
+		fmt.Fprintf(os.Stderr, "\nTests NOT passed," +
+			" you can review produced data in the directory: %s\n\n", tempRoot)
 	}
 
 	os.Exit(ret)
@@ -60,13 +77,16 @@ func TestLogging(t *testing.T) {
 	// Sort it
 	sort.Strings(testNames)
 
+	// Create temporary directory to write test logs
+	logDir := tempDir()
+
 	// Run tests
 	for _, testN := range testNames {
 		// Get test configuration
 		test := loggingTests[testN]
 
 		// Create output filename
-		file := filepath.Join(tempDir, fmt.Sprintf("log-test_%s.log", testN))
+		file := filepath.Join(logDir, fmt.Sprintf("log-test_%s.log", testN))
 
 		// Write test log data to file to check with expected
 		if err := writeLogSample(testN, file); err != nil {
@@ -358,19 +378,14 @@ func TestFatal(t *testing.T) {
 }
 
 func TestFailOpen(t *testing.T) {
-	// Create temp directory
-	tmpDir, err := os.MkdirTemp("", `go-test-rche-log.*`)
-	if err != nil {
-		t.Errorf("cannot create temporary directory: %v", err)
-		t.FailNow()
-	}
-	defer os.RemoveAll(tmpDir)
+	// Create temporary directory to write test logs
+	logDir := tempDir()
 
 	// Create filename includes non-existing directory
-	logFile := filepath.Join(tempDir, "this-dir-does-not-exist", "fail-open.log")
+	logFile := filepath.Join(logDir, "this-dir-does-not-exist", "fail-open.log")
 
 	//nolint:errorlint // Try to open log on this file
-	switch err = Open(logFile, stubApp, NoFlags); err.(type) {
+	switch err := Open(logFile, stubApp, NoFlags); err.(type) {
 	// No errors when error is expected
 	case nil:
 		// This should not happen, register abnormal behavior
@@ -415,8 +430,11 @@ func TestDefaultLog(t *testing.T) {
 }
 
 func TestFailReopenNxFile(t *testing.T) {
+	// Create temporary directory to write test logs
+	logDir := tempDir()
+
 	// Create output filename
-	logFile := filepath.Join(tempDir, "fail-reopen.log")
+	logFile := filepath.Join(logDir, "fail-reopen.log")
 
 	// Open log file
 	if err := Open(logFile, stubApp, NoFlags); err != nil {
@@ -430,7 +448,7 @@ func TestFailReopenNxFile(t *testing.T) {
 	Debug("Invisible message")
 
 	// Replace normal filename by filename includes non-existing directory
-	logger.logName = filepath.Join(tempDir, "this-dir-does-not-exist", "fail-reopen.log")
+	logger.logName = filepath.Join(logDir, "this-dir-does-not-exist", "fail-reopen.log")
 
 	//nolint:errorlint // Try to reopen on changed location
 	switch err := Reopen(); err.(type) {
@@ -508,8 +526,11 @@ func TestFailReopenCloseErr(t *testing.T) {
 }
 
 func TestFailDoubleClose(t *testing.T) {
+	// Create temporary directory to write test logs
+	logDir := tempDir()
+
 	// Create output filename
-	logFile := filepath.Join(tempDir, "fail-double-close.log")
+	logFile := filepath.Join(logDir, "fail-double-close.log")
 
 	// Open log file
 	if err := Open(logFile, stubApp, NoFlags); err != nil {
@@ -542,8 +563,11 @@ func TestFailDoubleClose(t *testing.T) {
 }
 
 func TestFailClose(t *testing.T) {
+	// Create temporary directory to write test logs
+	logDir := tempDir()
+
 	// Create output filename
-	logFile := filepath.Join(tempDir, "fail-close.log")
+	logFile := filepath.Join(logDir, "fail-close.log")
 
 	// Open log file
 	if err := Open(logFile, stubApp, NoFlags); err != nil {
