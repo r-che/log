@@ -22,6 +22,7 @@ type logMsg struct {
 	format string
 	args []any
 	fatal bool
+	done chan bool
 }
 
 // A Logger represents an active logging object that generates lines of output to file
@@ -83,7 +84,12 @@ func (l *Logger) Open(file, prefix string, flags int) error {
 						l.logger.Fatalf(msg.format, msg.args...)
 					}
 				}
+
+				// Write message to the log
 				l.logger.Printf(msg.format, msg.args...)
+
+				// Close the done channel in the message to notify the caller that the message is written
+				close(msg.done)
 
 			case <-l.stpStrCh:
 				// Send signal that stop message was received
@@ -128,7 +134,7 @@ func (l *Logger) D(format string, v ...any) {
 	if !l.debug {
 		return
 	}
-	l.msgCh <-&logMsg{format: "<D> " + format, args: v}
+	l.writeEvent(&logMsg{format: "<D> " + format, args: v})
 }
 // Debug calls [Debug] on the l object.
 func (l *Logger) Debug(format string, v ...any) {
@@ -137,7 +143,7 @@ func (l *Logger) Debug(format string, v ...any) {
 
 // I is an shortcut for Info.
 func (l *Logger) I(format string, v ...any) {
-	l.msgCh <-&logMsg{format: format, args: v}
+	l.writeEvent(&logMsg{format: format, args: v})
 }
 // Info calls [Info] on the l object.
 func (l *Logger) Info(format string, v ...any) {
@@ -146,7 +152,7 @@ func (l *Logger) Info(format string, v ...any) {
 
 // W is an shortcut for Warn.
 func (l *Logger) W(format string, v ...any) {
-	l.msgCh <-&logMsg{format: "<WRN> " + format, args: v}
+	l.writeEvent(&logMsg{format: "<WRN> " + format, args: v})
 
 	// Call statistic function if was set
 	if l.wrnEventStat != nil {
@@ -166,7 +172,7 @@ func (l *Logger) E(format string, v ...any) {
 		log.Printf("<ERR> " + format, v...)
 	}
 
-	l.msgCh <-&logMsg{format: "<ERR> " + format, args: v}
+	l.writeEvent(&logMsg{format: "<ERR> " + format, args: v})
 
 	// Call statistic function if was set
 	if l.errEventStat != nil {
@@ -186,7 +192,7 @@ func (l *Logger) F(format string, v ...any) {
 		log.Printf("<FATAL> " + format, v...)
 	}
 
-	l.msgCh <-&logMsg{format: "<FATAL> " + format, args: v, fatal: true}
+	l.writeEvent(&logMsg{format: "<FATAL> " + format, args: v, fatal: true})
 }
 // Fatal calls [Fatal] on the l object.
 func (l *Logger) Fatal(format string, v ...any) {
@@ -284,4 +290,15 @@ func (l *Logger) setFlags(prefix string, flags int) {
 
 	// Apply mandatory flags
 	l.logFlags = flags | logFlagsAlways
+}
+
+func (l *Logger) writeEvent(event *logMsg) {
+	// Initiate a channel to block call until the message is written
+	event.done = make(chan bool)
+
+	// Send event to writer goroutine
+	l.msgCh<-event
+
+	// Wait for done signal
+	<-event.done
 }
