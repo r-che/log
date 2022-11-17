@@ -24,9 +24,12 @@ const (
 	tempLogPrefix	=	`go-test-rche-log.*`
 )
 
-// Disable exiting on fatal log messages for testing purposes
 func init() {	//nolint:gochecknoinits
+	// Disable exiting on fatal log messages for testing purposes
 	fatalDoExit = false
+
+	// Enable govet stubs to not to spoil the coverage of the tests
+	govetPrintfStub = true
 }
 
 // tempDir creates temporary directory inside of the temporary root directory configured by TestMain

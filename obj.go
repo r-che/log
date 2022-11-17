@@ -48,6 +48,8 @@ type Logger struct {
 
 //nolint:gochecknoglobals // Auxiliary variable to avoid tests termination on Fatal() function
 var fatalDoExit = true
+//nolint:gochecknoglobals // Auxiliary variable to enable govet printf checking, can be true only in tests
+var govetPrintfStub = false
 
 // NewLogger creates a new Logger. By default, the logger object has no writer object and must
 // be initialized using [Logger.Open] function.
@@ -135,6 +137,9 @@ func (l *Logger) D(format string, v ...any) {
 		return
 	}
 	l.writeEvent(&logMsg{format: "<D> " + format, args: v})
+
+	// XXX Enable govet printf checking
+	if govetPrintfStub { _ = fmt.Sprintf(format, v...) }
 }
 // Debug calls [Debug] on the l object.
 func (l *Logger) Debug(format string, v ...any) {
@@ -144,6 +149,9 @@ func (l *Logger) Debug(format string, v ...any) {
 // I is an shortcut for Info.
 func (l *Logger) I(format string, v ...any) {
 	l.writeEvent(&logMsg{format: format, args: v})
+
+	// XXX Enable govet printf checking
+	if govetPrintfStub { _ = fmt.Sprintf(format, v...) }
 }
 // Info calls [Info] on the l object.
 func (l *Logger) Info(format string, v ...any) {
@@ -158,6 +166,9 @@ func (l *Logger) W(format string, v ...any) {
 	if l.wrnEventStat != nil {
 		l.wrnEventStat(format, v...)
 	}
+
+	// XXX Enable govet printf checking
+	if govetPrintfStub { _ = fmt.Sprintf(format, v...) }
 }
 // Warn calls [Warn] on the l object.
 func (l *Logger) Warn(format string, v ...any) {
@@ -178,6 +189,9 @@ func (l *Logger) E(format string, v ...any) {
 	if l.errEventStat != nil {
 		l.errEventStat(format, v...)
 	}
+
+	// XXX Enable govet printf checking
+	if govetPrintfStub { _ = fmt.Sprintf(format, v...) }
 }
 // Err calls [Err] on the l object.
 func (l *Logger) Err(format string, v ...any) {
@@ -193,6 +207,9 @@ func (l *Logger) F(format string, v ...any) {
 	}
 
 	l.writeEvent(&logMsg{format: "<FATAL> " + format, args: v, fatal: true})
+
+	// XXX Enable govet printf checking
+	if govetPrintfStub { _ = fmt.Sprintf(format, v...) }
 }
 // Fatal calls [Fatal] on the l object.
 func (l *Logger) Fatal(format string, v ...any) {
